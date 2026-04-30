@@ -1,0 +1,19 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html { scroll-behavior: smooth; }
+  body { font-family: 'Inter', system-ui, sans-serif; color: #1f2937; }
+  h1, h2, h3 { font-family: 'Cormorant Garamond', Georgia, serif; }
+  [dir='rtl'] body, .lang-ar body { font-family: 'Tajawal', system-ui, sans-serif; }
+}
+
+@layer components {
+  .container-x { @apply max-w-6xl mx-auto px-4 sm:px-6 lg:px-8; }
+  .nav-link { @apply text-gray-700 hover:text-navy-900 transition-colors text-sm font-medium; }
+  .nav-link-active { @apply text-navy-900 underline underline-offset-8 decoration-2; }
+  .btn-primary { @apply inline-flex items-center justify-center rounded-full border border-white/80 bg-transparent text-white px-6 py-2 text-sm tracking-wide hover:bg-white hover:text-navy-900 transition; }
+  .btn-danger { @apply inline-flex items-center justify-center rounded-md bg-brand-red text-white px-6 py-2 text-sm font-medium hover:opacity-90 transition; }
+  .heading-serif { @apply font-serif text-4xl md:text-5xl text-gray-200/40 text-center; }
+}
