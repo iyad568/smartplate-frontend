@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useLang } from "../i18n.jsx";
 import { userStore } from "../admin/store.js";
+import { apiService } from "../services/api.js";
 
 export default function NouveauContact() {
   const { t } = useLang();
@@ -9,49 +10,60 @@ export default function NouveauContact() {
   const [form, setForm] = useState({
     fullname: "",
     email: "",
-    phone: "",
+    phone: "+213",
     password: "",
     confirm: "",
     role: "user",
   });
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const onChange = (e) =>
     setForm((f) => ({ ...f, [e.target.name]: e.target.value }));
 
-  const onSubmit = (e) => {
+  const onSubmit = async (e) => {
     e.preventDefault();
     if (form.password !== form.confirm) {
       setError("Les mots de passe ne correspondent pas");
       return;
     }
     
-    const result = userStore.register({
-      fullname: form.fullname,
-      email: form.email,
-      phone: form.phone,
-      password: form.password,
-      role: form.role,
-    });
-
-    if (!result.success) {
-      setError(result.error);
-      return;
-    }
-
-    // Auto-login after registration
-    userStore.authenticate(form.email, form.password);
-
+    setLoading(true);
     setError("");
-    alert(t("reg_submit") + " ✓");
-    
-    // Redirect based on role
-    if (form.role === "user") {
-      navigate("/dashboard");
-    } else if (form.role === "sos") {
-      navigate("/operator/sos");
-    } else if (form.role === "depannage") {
-      navigate("/operator/depannage");
+
+    try {
+      // Call backend API to signup
+      await apiService.signup({
+        fullname: form.fullname,
+        email: form.email,
+        phone: form.phone,
+        password: form.password,
+        confirm: form.confirm,
+        role: form.role,
+      });
+
+      // Success - navigate to OTP verification page
+      navigate(
+        `/verify-email?email=${encodeURIComponent(form.email)}&reason=signup`
+      );
+    } catch (error) {
+      console.error('Registration error:', error);
+      let errorMessage = "Erreur lors de l'inscription";
+      
+      if (error.message) {
+        // Try to extract meaningful error message
+        if (error.message.includes('already registered')) {
+          errorMessage = "Cet email est déjà enregistré";
+        } else if (error.message.includes('validation')) {
+          errorMessage = "Vérifiez les informations saisies";
+        } else if (error.message.length < 100) {
+          errorMessage = error.message;
+        }
+      }
+      
+      setError(errorMessage);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -90,9 +102,10 @@ export default function NouveauContact() {
               required
               value={form.email}
               onChange={onChange}
-              placeholder="Enter your email address"
+              placeholder="exemple@gmail.com"
               className="w-full rounded-md bg-white/95 text-gray-900 px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-white/60"
             />
+            <p className="text-xs text-gray-400 mt-1">Doit être une adresse Gmail (@gmail.com)</p>
           </div>
 
           <div>
@@ -105,9 +118,10 @@ export default function NouveauContact() {
               required
               value={form.phone}
               onChange={onChange}
-              placeholder="+213 ..."
+              placeholder="+213555123456"
               className="w-full rounded-md bg-white/95 text-gray-900 px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-white/60"
             />
+            <p className="text-xs text-gray-400 mt-1">Format international: +213555123456</p>
           </div>
 
           <div>
@@ -139,6 +153,7 @@ export default function NouveauContact() {
               onChange={onChange}
               className="w-full rounded-md bg-white/95 text-gray-900 px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-white/60"
             />
+            <p className="text-xs text-gray-400 mt-1">8+ chars, majuscule, minuscule, chiffre, caractère spécial</p>
           </div>
 
           <div>
@@ -163,9 +178,10 @@ export default function NouveauContact() {
 
           <button
             type="submit"
-            className="w-full rounded-md bg-white text-navy-900 font-semibold px-4 py-2.5 hover:bg-gray-100 transition"
+            disabled={loading}
+            className="w-full rounded-md bg-white text-navy-900 font-semibold px-4 py-2.5 hover:bg-gray-100 transition disabled:bg-gray-300 disabled:cursor-not-allowed"
           >
-            {t("reg_submit")}
+            {loading ? "Inscription..." : t("reg_submit")}
           </button>
 
           <div className="pt-3 text-center text-sm text-gray-300 border-t border-white/10">

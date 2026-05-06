@@ -1,8 +1,11 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { useLang } from "../i18n.jsx";
+import { apiService } from "../services/api.js";
 
 export default function PlaqueStandard() {
   const { t } = useLang();
+  const navigate = useNavigate();
   const [form, setForm] = useState({
     name: "",
     first: "",
@@ -16,13 +19,134 @@ export default function PlaqueStandard() {
     plate: "",
     power: "essence",
   });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [selectedCarId, setSelectedCarId] = useState(null);
+  const [cartGriseFile, setCartGriseFile] = useState(null);
+  const [cartGriseUploading, setCartGriseUploading] = useState(false);
+  const [cars, setCars] = useState([]);
+  const [loadingCars, setLoadingCars] = useState(false);
 
   const onChange = (e) =>
     setForm((f) => ({ ...f, [e.target.name]: e.target.value }));
 
-  const submit = (action) => (e) => {
+  // Load user's cars
+  const loadCars = async () => {
+    setLoadingCars(true);
+    try {
+      const userCars = await apiService.getUserCars();
+      setCars(userCars.cars || []);
+    } catch (err) {
+      console.error("Error loading cars:", err);
+      setError("Erreur lors du chargement des véhicules");
+    } finally {
+      setLoadingCars(false);
+    }
+  };
+
+  // Load cars on component mount
+  useEffect(() => {
+    loadCars();
+  }, []);
+
+  // Handle car selection
+  const handleCarSelect = (car) => {
+    setForm({
+      name: car.owner_name || "",
+      first: car.owner_first_name || "",
+      phone: car.owner_phone || "",
+      email: car.owner_email || "",
+      cni: car.cni_number || "",
+      address: car.owner_address || "",
+      chassis: car.chassis_number || "",
+      type: car.vehicle_type || "",
+      brand: car.vehicle_brand || "",
+      plate: car.plate_number || "",
+      power: car.power_type || "essence",
+    });
+    setSelectedCarId(car.id);
+    setError("");
+  };
+
+  const handleCartGriseUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    setCartGriseUploading(true);
+    try {
+      const uploadResult = await apiService.uploadFile(file, 'cart_grise');
+      setCartGriseFile(uploadResult.url);
+      setError("");
+    } catch (err) {
+      setError("Erreur lors du téléchargement de la carte grise: " + err.message);
+    } finally {
+      setCartGriseUploading(false);
+    }
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    alert(`${action}: ${form.name} ${form.first}`);
+    
+    // Validate form
+    if (!form.name || !form.first || !form.phone || !form.email || !form.cni || 
+        !form.address || !form.chassis || !form.type || !form.brand || !form.plate) {
+      setError("Veuillez remplir tous les champs obligatoires");
+      return;
+    }
+
+    setLoading(true);
+    setError("");
+
+    try {
+      // Create order with plate type based on current page
+      const getCurrentPlateType = () => {
+        const pathname = window.location.pathname;
+        if (pathname.includes('plaque-standard')) return 'standard';
+        if (pathname.includes('plaque-silver')) return 'silver';
+        if (pathname.includes('plaque-gold')) return 'gold';
+        return 'standard'; // default
+      };
+
+      const orderData = {
+        name: form.name,
+        first: form.first,
+        phone: form.phone,
+        email: form.email,
+        cni: form.cni,
+        address: form.address,
+        chassis: form.chassis,
+        type: form.type,
+        brand: form.brand,
+        plate: form.plate,
+        power: form.power,
+        order_type: "plate_order",
+        plate_type: getCurrentPlateType(),
+        total_price: 5000.00,
+        currency: "DZD",
+        cart_grise_url: cartGriseFile, // Add cart grise URL
+      };
+
+      const order = await apiService.createOrder(orderData);
+      
+      // Show success message
+      alert(`Commande créée avec succès! Numéro de commande: ${order.id}`);
+      
+      // Optionally redirect to order confirmation page
+      // navigate(`/order-confirmation/${order.id}`);
+      
+    } catch (err) {
+      console.error('Error creating order:', err);
+      console.error('Error details:', err.response);
+      
+      // Handle 422 validation errors specifically
+      if (err.message && err.message.includes('422')) {
+        setError("Erreur de validation: Vérifiez tous les champs du formulaire");
+      } else {
+        setError(err.message || "Erreur lors de la création de la commande");
+      }
+    } finally {
+      setLoading(false);
+    }
   };
 
   const inputClass =
@@ -33,12 +157,19 @@ export default function PlaqueStandard() {
       <div className="container-x py-16 grid lg:grid-cols-5 gap-10 items-start">
         {/* Form on the left (3 cols) */}
         <form
-          onSubmit={submit(t("ps_register"))}
+          onSubmit={handleSubmit}
           className="lg:col-span-3 bg-white rounded-2xl border border-gray-100 shadow-md p-6 md:p-8 space-y-5"
         >
           <h1 className="font-serif text-2xl md:text-3xl text-navy-900 mb-2">
             {t("ps_personal")}
           </h1>
+          
+          {/* Error Display */}
+          {error && (
+            <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-md">
+              <p className="text-red-700 text-sm">❌ {error}</p>
+            </div>
+          )}
           <div className="grid sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-xs font-medium text-gray-600 mb-1">
@@ -194,29 +325,53 @@ export default function PlaqueStandard() {
             <label className="block text-xs font-medium text-gray-600 mb-1">
               {t("ps_attach_card")}
             </label>
-            <input
-              type="file"
-              accept="image/*,.pdf"
-              className="block w-full text-sm text-gray-700 file:mr-3 file:rounded-md file:border-0 file:bg-navy-900 file:text-white file:px-4 file:py-2 file:cursor-pointer hover:file:bg-navy-800"
-            />
+            
+            {/* Cart Grise Upload */}
+            <div className="mb-4">
+              <label className="block text-xs font-medium text-gray-600 mb-2">
+                Carte Grise (Gray Card)
+              </label>
+              <input
+                type="file"
+                accept=".pdf,.jpg,.jpeg,.png"
+                onChange={handleCartGriseUpload}
+                disabled={cartGriseUploading}
+                className="w-full rounded-md border border-gray-200 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-navy-900/30 bg-white text-sm"
+              />
+              {cartGriseUploading && (
+                <p className="mt-2 text-sm text-blue-600">Téléchargement en cours...</p>
+              )}
+              {cartGriseFile && (
+                <div className="mt-2 text-sm text-green-600">
+                  ✅ Carte grise téléchargée avec succès
+                </div>
+              )}
+            </div>
           </div>
 
           <div className="flex flex-wrap items-center justify-between gap-4 pt-4 border-t border-gray-200">
+            {error && (
+              <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-md">
+                <p className="text-red-700 text-sm">❌ {error}</p>
+              </div>
+            )}
             <div className="font-semibold text-navy-900">{t("ps_price")}</div>
             <div className="flex gap-3">
               <button
                 type="button"
-                onClick={submit(t("ps_register"))}
-                className="rounded-md bg-gray-700 text-white px-5 py-2 text-sm font-medium hover:bg-gray-800 transition"
+                onClick={handleSubmit}
+                disabled={loading}
+                className="rounded-md bg-gray-700 text-white px-5 py-2 text-sm font-medium hover:bg-gray-800 transition disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {t("ps_register")}
+                {loading ? "Création..." : t("ps_register")}
               </button>
               <button
                 type="submit"
-                onClick={submit(t("ps_pay"))}
-                className="rounded-md bg-navy-900 text-white px-5 py-2 text-sm font-medium hover:bg-navy-800 transition"
+                onClick={handleSubmit}
+                disabled={loading}
+                className="rounded-md bg-navy-900 text-white px-5 py-2 text-sm font-medium hover:bg-navy-800 transition disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {t("ps_pay")}
+                {loading ? "Traitement..." : t("ps_pay")}
               </button>
             </div>
           </div>

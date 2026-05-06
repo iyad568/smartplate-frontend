@@ -2,12 +2,14 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useLang } from "../i18n.jsx";
 import { userStore } from "../admin/store.js";
+import { apiService } from "../services/api.js";
 
 export default function SeConnecter() {
   const { t } = useLang();
   const navigate = useNavigate();
   const [form, setForm] = useState({ email: "", password: "" });
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
   return (
     <section className="bg-[#0b1d3a] min-h-[70vh] grid place-items-center text-white py-16">
@@ -18,21 +20,23 @@ export default function SeConnecter() {
         </div>
 
         <form
-          onSubmit={(e) => {
+          onSubmit={async (e) => {
             e.preventDefault();
-            const result = userStore.authenticate(form.email, form.password);
-            if (result.success) {
-              setError("");
-              // Redirect based on role
-              if (result.user.role === "user") {
-                navigate("/dashboard");
-              } else if (result.user.role === "sos") {
-                navigate("/operator/sos");
-              } else if (result.user.role === "depannage") {
-                navigate("/operator/depannage");
-              }
-            } else {
-              setError(result.error);
+            setLoading(true);
+            setError("");
+
+            try {
+              // Step 1: Login with password
+              const loginResult = await apiService.login(form.email, form.password);
+              
+              // Step 2: Navigate to OTP verification page
+              navigate(
+                `/verify-login?email=${encodeURIComponent(form.email)}&preAuthToken=${loginResult.pre_auth_token}`
+              );
+            } catch (error) {
+              setError(error.message || "Identifiants invalides");
+            } finally {
+              setLoading(false);
             }
           }}
           className="mt-8 space-y-4"
@@ -70,16 +74,20 @@ export default function SeConnecter() {
 
           <button
             type="submit"
-            className="w-full rounded-md bg-white text-navy-900 font-semibold px-4 py-2.5 hover:bg-gray-100 transition"
+            disabled={loading}
+            className="w-full rounded-md bg-white text-navy-900 font-semibold px-4 py-2.5 hover:bg-gray-100 transition disabled:bg-gray-300 disabled:cursor-not-allowed"
           >
-            {t("login_submit")}
+            {loading ? "Connexion..." : t("login_submit")}
           </button>
         </form>
 
         <div className="mt-6 flex items-center justify-between text-sm">
-          <a href="#" className="text-gray-300 hover:text-white">
+          <Link
+            to="/dashboard/send-otp-password"
+            className="text-gray-300 hover:text-white"
+          >
             {t("login_forgot")}
-          </a>
+          </Link>
           <Link
             to="/nouveau-contact"
             className="text-gray-300 hover:text-white"

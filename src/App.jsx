@@ -18,6 +18,14 @@ import SosAdmin from "./pages/SosAdmin.jsx";
 import DepannageAdmin from "./pages/DepannageAdmin.jsx";
 import SosOperator from "./pages/SosOperator.jsx";
 import DepannageOperator from "./pages/DepannageOperator.jsx";
+import VerifyEmail from "./pages/VerifyEmail.jsx";
+import VerifyLogin from "./pages/VerifyLogin.jsx";
+import ResetPassword from "./pages/ResetPassword.jsx";
+import ChangePassword from "./pages/ChangePassword.jsx";
+import SendOtpPassword from "./pages/SendOtpPassword.jsx";
+import ProfilVehicule from "./pages/ProfilVehicule.jsx";
+import ImprimerLicence from "./pages/ImprimerLicence.jsx";
+import VehiclePublicView from "./pages/VehiclePublicView.jsx";
 import { RequireAdmin, RequireOperator, RequireUser } from "./admin/AdminLayout.jsx";
 
 export default function App() {
@@ -28,12 +36,26 @@ export default function App() {
         <Route path="/produits" element={<Produits />} />
         {/* alias to match the live site URL */}
         <Route path="/accueil" element={<Produits />} />
-        <Route path="/services" element={<Services />} />
+        <Route 
+          path="/services" 
+          element={
+            <RequireUser>
+              <Services />
+            </RequireUser>
+          } 
+        />
         <Route path="/smartsticks" element={<Smartsticks />} />
         <Route path="/securite" element={<Securite />} />
         <Route path="/securite-and-innovation" element={<Securite />} />
         <Route path="/a-propos" element={<APropos />} />
-        <Route path="/bienvenue" element={<Bienvenue />} />
+        <Route 
+          path="/bienvenue" 
+          element={
+            <RequireUser>
+              <Bienvenue />
+            </RequireUser>
+          } 
+        />
         <Route 
           path="/dashboard" 
           element={
@@ -44,6 +66,34 @@ export default function App() {
         />
         <Route path="/se-connecter" element={<SeConnecter />} />
         <Route path="/nouveau-contact" element={<NouveauContact />} />
+        <Route path="/verify-email" element={<VerifyEmail />} />
+        <Route path="/verify-login" element={<VerifyLogin />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
+        <Route 
+          path="/dashboard/change-password" 
+          element={
+            <RequireUser>
+              <ChangePassword />
+            </RequireUser>
+          } 
+        />
+        <Route path="/dashboard/send-otp-password" element={<SendOtpPassword />} />
+        <Route
+          path="/dashboard/profil"
+          element={
+            <RequireUser>
+              <ProfilVehicule />
+            </RequireUser>
+          }
+        />
+        <Route
+          path="/dashboard/licence"
+          element={
+            <RequireUser>
+              <ImprimerLicence />
+            </RequireUser>
+          }
+        />
         <Route 
           path="/plaque-standard" 
           element={
@@ -68,12 +118,35 @@ export default function App() {
             </RequireUser>
           } 
         />
-        <Route path="/sos" element={<Sos />} />
-        <Route path="/depannage" element={<Depannage />} />
-        <Route path="/urgence-depannage" element={<Depannage />} />
+        <Route 
+          path="/sos" 
+          element={
+            <RequireUser>
+              <Sos />
+            </RequireUser>
+          } 
+        />
+        <Route 
+          path="/depannage" 
+          element={
+            <RequireUser>
+              <Depannage />
+            </RequireUser>
+          } 
+        />
+        <Route 
+          path="/urgence-depannage" 
+          element={
+            <RequireUser>
+              <Depannage />
+            </RequireUser>
+          } 
+        />
+        {/* Public vehicle profile — accessible by anyone who scans the QR code */}
+        <Route path="/vehicle/:qrCode" element={<VehiclePublicView />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Route>
-      
+
       {/* Admin routes */}
       <Route path="/admin" element={<AdminLogin />} />
       <Route

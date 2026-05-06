@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useLang } from "../i18n.jsx";
-import { depStore } from "../admin/store.js";
+import { apiService } from "../services/api.js";
 
 export default function Depannage() {
   const { t } = useLang();
@@ -13,22 +13,41 @@ export default function Depannage() {
     notes: "",
   });
   const [sent, setSent] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
   const onChange = (e) =>
     setForm((f) => ({ ...f, [e.target.name]: e.target.value }));
 
-  const onSubmit = (e) => {
+  const onSubmit = async (e) => {
     e.preventDefault();
-    depStore.add(form);
-    setSent(true);
-    setForm({
-      name: "",
-      phone: "",
-      plate: "",
-      problem: "battery",
-      location: "",
-      notes: "",
-    });
+    setLoading(true);
+    setError("");
+    
+    // Check if user is authenticated
+    if (!apiService.isAuthenticated()) {
+      setError("Vous devez être connecté pour envoyer une demande de dépannage");
+      setLoading(false);
+      return;
+    }
+    
+    try {
+      await apiService.submitDepannageRequest(form);
+      setSent(true);
+      setForm({
+        name: "",
+        phone: "",
+        plate: "",
+        problem: "battery",
+        location: "",
+        notes: "",
+      });
+    } catch (err) {
+      console.error('Depannage submission error:', err);
+      setError(err.message || "Erreur lors de l'envoi de la demande de dépannage");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const inputClass =
@@ -154,14 +173,31 @@ export default function Depannage() {
 
             <button
               type="submit"
-              className="w-full rounded-md bg-navy-900 text-white font-semibold py-3 hover:bg-navy-800 transition"
+              disabled={loading}
+              className="w-full rounded-md bg-navy-900 text-white font-semibold py-3 hover:bg-navy-800 transition disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {t("dep_submit")}
+              {loading ? (
+                <>
+                  <svg className="animate-spin inline mr-2" width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden>
+                    <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" className="opacity-25" />
+                    <path d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" className="opacity-75" fill="currentColor" />
+                  </svg>
+                  Envoi en cours...
+                </>
+              ) : (
+                t("dep_submit")
+              )}
             </button>
+
+            {error && (
+              <p className="text-sm text-red-700 bg-red-50 border border-red-200 rounded-md p-3">
+                ❌ {error}
+              </p>
+            )}
 
             {sent && (
               <p className="text-sm text-green-700 bg-green-50 border border-green-200 rounded-md p-3">
-                ✓ {t("dep_submit")} — OK
+                ✓ Demande de dépannage envoyée avec succès
               </p>
             )}
           </form>

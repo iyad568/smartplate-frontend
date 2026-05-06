@@ -218,6 +218,31 @@ export default {
   admin_delete: "Supprimer",
   admin_confirm_delete: "Supprimer cette demande ?",
 
+  // Email verification
+  verify_title: "Vérification de votre email",
+  verify_reset_title: "Réinitialisation de votre mot de passe",
+  verify_sent_to: "Un code à 6 chiffres a été envoyé à",
+  verify_demo_label: "Démo — votre code (en production, envoyé par email)",
+  verify_code_label: "Code de vérification",
+  verify_submit: "Vérifier",
+  verify_resend: "Renvoyer le code",
+  verify_resent: "Code renvoyé",
+  verify_no_email: "Aucune adresse email à vérifier.",
+
+  // Password reset
+  reset_title: "Réinitialiser le mot de passe",
+  reset_step1_sub: "Entrez votre email pour recevoir un code",
+  reset_step2_sub: "Entrez le code et votre nouveau mot de passe",
+  reset_send_code: "Envoyer le code",
+  reset_new_password: "Nouveau mot de passe",
+  reset_confirm_password: "Confirmer le mot de passe",
+  reset_submit: "Mettre à jour le mot de passe",
+  reset_change_email: "Changer d'email",
+  reset_email_not_found: "Aucun compte trouvé avec cet email",
+  reset_password_mismatch: "Les mots de passe ne correspondent pas",
+  reset_password_too_short: "Le mot de passe est trop court",
+  reset_success: "Mot de passe mis à jour avec succès",
+
   // dashboard
   dash_welcome: "Bienvenue",
   dash_name: "Bilal",
@@ -227,6 +252,7 @@ export default {
   dash_print_lic: "imprimer ma licence",
   dash_insurance: "Mon assurance",
   dash_sell: "Vendre ma plaque",
+  dash_profile: "Profil du véhicule",
 
   // footer
   foot_address_label: "Address",

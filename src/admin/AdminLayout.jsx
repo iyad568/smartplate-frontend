@@ -1,5 +1,6 @@
 import { Navigate, useLocation, NavLink, useNavigate } from "react-router-dom";
 import { adminAuth, userStore } from "./store.js";
+import { apiService } from "../services/api.js";
 import { useLang } from "../i18n.jsx";
 
 export function RequireAdmin({ children }) {
@@ -34,9 +35,9 @@ export function RequireOperator({ children, allowedRoles }) {
 
 export function RequireUser({ children }) {
   const location = useLocation();
-  const user = userStore.getCurrentUser();
   
-  if (!user) {
+  // Check if user is authenticated using JWT token
+  if (!apiService.isAuthenticated()) {
     return (
       <Navigate
         to="/se-connecter"

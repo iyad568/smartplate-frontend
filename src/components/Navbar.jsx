@@ -1,23 +1,66 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { NavLink, Link } from "react-router-dom";
 import { useLang } from "../i18n.jsx";
+import { apiService } from "../services/api.js";
 import Logo from "./Logo.jsx";
 import LanguageSwitcher from "./LanguageSwitcher.jsx";
 
 export default function Navbar() {
   const { t } = useLang();
   const [open, setOpen] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(apiService.isAuthenticated());
 
-  const items = [
+  // Check authentication status whenever component mounts or localStorage changes
+  useEffect(() => {
+    const checkAuth = () => {
+      setIsAuthenticated(apiService.isAuthenticated());
+    };
+
+    // Check on mount
+    checkAuth();
+
+    // Listen for storage changes (for login/logout from other tabs)
+    const handleStorageChange = () => {
+      checkAuth();
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    
+    // Also check periodically for local changes
+    const interval = setInterval(checkAuth, 1000);
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      clearInterval(interval);
+    };
+  }, []);
+  
+  const publicItems = [
+    { to: "/", label: t("nav_home"), end: true },
+    { to: "/produits", label: t("nav_products") },
+    { to: "/smartsticks", label: t("nav_smartsticks") },
+    { to: "/securite", label: t("nav_security") },
+    { to: "/a-propos", label: t("nav_about") },
     { to: "/se-connecter", label: t("nav_login") },
+  ];
+
+  const authItems = [
+    { to: "/bienvenue", label: t("nav_welcome") },
     { to: "/", label: t("nav_home"), end: true },
     { to: "/produits", label: t("nav_products") },
     { to: "/services", label: t("nav_services") },
     { to: "/smartsticks", label: t("nav_smartsticks") },
     { to: "/securite", label: t("nav_security") },
     { to: "/a-propos", label: t("nav_about") },
-    { to: "/bienvenue", label: t("nav_welcome") },
   ];
+
+  const items = isAuthenticated ? authItems : publicItems;
+
+  const handleLogout = () => {
+    apiService.clearTokens();
+    setIsAuthenticated(false); // Update state immediately
+    window.location.href = "/";
+  };
 
   return (
     <header className="bg-gray-100 border-b border-gray-200">
@@ -41,8 +84,16 @@ export default function Navbar() {
           ))}
         </nav>
 
-        <div className="hidden lg:block">
+        <div className="hidden lg:flex items-center gap-3">
           <LanguageSwitcher />
+          {isAuthenticated && (
+            <button
+              onClick={handleLogout}
+              className="text-sm font-medium text-navy-900 hover:text-red-600 transition-colors"
+            >
+              Déconnexion
+            </button>
+          )}
         </div>
 
         <button
@@ -76,6 +127,16 @@ export default function Navbar() {
             <li className="pt-2">
               <LanguageSwitcher />
             </li>
+            {isAuthenticated && (
+              <li className="pt-2 border-t border-gray-200">
+                <button
+                  onClick={handleLogout}
+                  className="w-full text-left py-2 text-sm font-medium text-red-600 hover:text-red-700 transition-colors"
+                >
+                  Déconnexion
+                </button>
+              </li>
+            )}
           </ul>
         </div>
       )}
