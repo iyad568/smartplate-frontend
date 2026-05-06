@@ -34,8 +34,9 @@ settings = get_settings()
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     logger.info("Starting SmartPlate API [%s]", settings.APP_ENV)
-    if not settings.is_production:
-        await create_tables()  # Production should run `alembic upgrade head`
+    # Always run create_tables — it uses CREATE TABLE IF NOT EXISTS so it is
+    # safe to call on every startup and creates the schema on a fresh DB.
+    await create_tables()
     yield
     logger.info("Shutting down SmartPlate API")
 

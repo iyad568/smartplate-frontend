@@ -5,7 +5,9 @@ asyncpg==0.29.0
 alembic==1.13.1
 pydantic[email]==2.7.1
 pydantic-settings==2.2.1
+# bcrypt must stay <4.0 — passlib 1.7.4 uses bcrypt.__about__ which was removed in v4
 passlib[bcrypt]==1.7.4
+bcrypt==4.0.1
 python-jose[cryptography]==3.3.0
 python-multipart==0.0.9
 aiosmtplib==3.0.1
