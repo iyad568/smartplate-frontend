@@ -1,0 +1,197 @@
+"""
+Repository for SOS request database operations.
+"""
+from datetime import datetime
+from typing import List, Optional
+from uuid import uuid4
+
+from sqlalchemy import and_, func, or_
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.future import select
+
+from app.models.sos_request import SOSRequest
+
+
+class SOSRepository:
+    """Repository for SOS request database operations."""
+    
+    def __init__(self, db: AsyncSession):
+        self.db = db
+    
+    async def create(self, request_data: dict) -> SOSRequest:
+        """Create a new SOS request."""
+        # Generate unique ID
+        request_data['id'] = str(uuid4())
+        request_data['created_at'] = datetime.utcnow()
+        request_data['updated_at'] = datetime.utcnow()
+        
+        sos_request = SOSRequest(**request_data)
+        self.db.add(sos_request)
+        await self.db.flush()
+        return sos_request
+    
+    async def get_by_id(self, request_id: str) -> Optional[SOSRequest]:
+        """Get an SOS request by ID."""
+        stmt = select(SOSRequest).where(SOSRequest.id == request_id)
+        result = await self.db.execute(stmt)
+        return result.scalar_one_or_none()
+    
+    async def get_all(
+        self,
+        skip: int = 0,
+        limit: int = 100,
+        status: Optional[str] = None,
+        user_id: Optional[str] = None,
+        is_active: Optional[bool] = None,
+        date_from: Optional[datetime] = None,
+        date_to: Optional[datetime] = None,
+        search: Optional[str] = None
+    ) -> List[SOSRequest]:
+        """Get SOS requests with optional filters."""
+        stmt = select(SOSRequest)
+        
+        # Apply filters
+        conditions = []
+        
+        if status:
+            conditions.append(SOSRequest.status == status)
+        if user_id:
+            conditions.append(SOSRequest.user_id == user_id)
+        if is_active is not None:
+            conditions.append(SOSRequest.is_active == is_active)
+        if date_from:
+            conditions.append(SOSRequest.created_at >= date_from)
+        if date_to:
+            conditions.append(SOSRequest.created_at <= date_to)
+        if search:
+            conditions.append(
+                or_(
+                    SOSRequest.full_name.ilike(f"%{search}%"),
+                    SOSRequest.email.ilike(f"%{search}%"),
+                    SOSRequest.license_plate.ilike(f"%{search}%"),
+                    SOSRequest.emergency_description.ilike(f"%{search}%"),
+                    SOSRequest.current_location.ilike(f"%{search}%")
+                )
+            )
+        
+        if conditions:
+            stmt = stmt.where(and_(*conditions))
+        
+        # Apply ordering and pagination
+        stmt = stmt.order_by(SOSRequest.created_at.desc()).offset(skip).limit(limit)
+        
+        result = await self.db.execute(stmt)
+        return result.scalars().all()
+    
+    async def count(
+        self,
+        status: Optional[str] = None,
+        user_id: Optional[str] = None,
+        is_active: Optional[bool] = None,
+        date_from: Optional[datetime] = None,
+        date_to: Optional[datetime] = None,
+        search: Optional[str] = None
+    ) -> int:
+        """Count SOS requests with optional filters."""
+        stmt = select(func.count(SOSRequest.id))
+        
+        # Apply filters (same as get_all)
+        conditions = []
+        
+        if status:
+            conditions.append(SOSRequest.status == status)
+        if user_id:
+            conditions.append(SOSRequest.user_id == user_id)
+        if is_active is not None:
+            conditions.append(SOSRequest.is_active == is_active)
+        if date_from:
+            conditions.append(SOSRequest.created_at >= date_from)
+        if date_to:
+            conditions.append(SOSRequest.created_at <= date_to)
+        if search:
+            conditions.append(
+                or_(
+                    SOSRequest.full_name.ilike(f"%{search}%"),
+                    SOSRequest.email.ilike(f"%{search}%"),
+                    SOSRequest.license_plate.ilike(f"%{search}%"),
+                    SOSRequest.emergency_description.ilike(f"%{search}%"),
+                    SOSRequest.current_location.ilike(f"%{search}%")
+                )
+            )
+        
+        if conditions:
+            stmt = stmt.where(and_(*conditions))
+        
+        result = await self.db.execute(stmt)
+        return result.scalar()
+    
+    async def update(self, request_id: str, update_data: dict) -> Optional[SOSRequest]:
+        """Update an SOS request."""
+        update_data['updated_at'] = datetime.utcnow()
+        
+        stmt = select(SOSRequest).where(SOSRequest.id == request_id)
+        result = await self.db.execute(stmt)
+        sos_request = result.scalar_one_or_none()
+        
+        if sos_request:
+            for key, value in update_data.items():
+                if hasattr(sos_request, key):
+                    setattr(sos_request, key, value)
+            await self.db.flush()
+        
+        return sos_request
+    
+    async def delete(self, request_id: str) -> bool:
+        """Delete an SOS request."""
+        stmt = select(SOSRequest).where(SOSRequest.id == request_id)
+        result = await self.db.execute(stmt)
+        sos_request = result.scalar_one_or_none()
+        
+        if sos_request:
+            await self.db.delete(sos_request)
+            await self.db.flush()
+            return True
+        
+        return False
+    
+    async def get_pending_requests(self, limit: int = 100) -> List[SOSRequest]:
+        """Get all pending SOS requests."""
+        return await self.get_all(status="en attente", is_active=True, limit=limit)
+    
+    async def get_recent_requests(self, limit: int = 10) -> List[SOSRequest]:
+        """Get recent SOS requests."""
+        return await self.get_all(limit=limit)
+    
+    async def get_stats(self) -> dict:
+        """Get SOS request statistics."""
+        # Count by status
+        stmt_total = select(func.count(SOSRequest.id))
+        stmt_pending = select(func.count(SOSRequest.id)).where(SOSRequest.status == 'en attente')
+        stmt_in_progress = select(func.count(SOSRequest.id)).where(SOSRequest.status == 'en cours')
+        stmt_resolved = select(func.count(SOSRequest.id)).where(SOSRequest.status == 'résolu')
+        stmt_cancelled = select(func.count(SOSRequest.id)).where(SOSRequest.status == 'annulé')
+        
+        # Execute count queries
+        total_result = await self.db.execute(stmt_total)
+        pending_result = await self.db.execute(stmt_pending)
+        in_progress_result = await self.db.execute(stmt_in_progress)
+        resolved_result = await self.db.execute(stmt_resolved)
+        cancelled_result = await self.db.execute(stmt_cancelled)
+        
+        # Count by status
+        stmt_status = select(
+            SOSRequest.status,
+            func.count(SOSRequest.id)
+        ).where(SOSRequest.is_active == True).group_by(SOSRequest.status)
+        
+        status_result = await self.db.execute(stmt_status)
+        requests_by_status = {row[0]: row[1] for row in status_result.all()}
+        
+        return {
+            "total_requests": total_result.scalar(),
+            "pending_requests": pending_result.scalar(),
+            "in_progress_requests": in_progress_result.scalar(),
+            "resolved_requests": resolved_result.scalar(),
+            "cancelled_requests": cancelled_result.scalar(),
+            "requests_by_status": requests_by_status
+        }
