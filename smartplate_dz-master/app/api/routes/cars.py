@@ -103,18 +103,33 @@ async def get_public_vehicle_info(
     qr_code: str,
     db: AsyncSession = Depends(get_db)
 ) -> dict:
-    """Public QR scan endpoint — returns vehicle data only (no personal info)."""
+    """Public QR scan endpoint — returns full vehicle + owner data."""
     service = CarService(db)
     car = await service.get_car_by_qr_code(qr_code)
     return {
+        # Vehicle info
         "qr_code": car.qr_code,
         "plate_number": car.plate_number,
         "vehicle_type": car.vehicle_type,
         "vehicle_brand": car.vehicle_brand,
         "power_type": car.power_type,
+        "chassis_number": car.chassis_number,
         "plate_photo_url": car.plate_photo_url,
         "status": car.status,
         "is_active": car.is_active,
+        # Owner info
+        "owner_name": car.owner_name,
+        "owner_first_name": car.owner_first_name,
+        "cni_number": car.cni_number,
+        "owner_phone": car.owner_phone,
+        "owner_email": car.owner_email,
+        "owner_address": car.owner_address,
+        # Documents
+        "assurance_paper_url": car.assurance_paper_url,
+        "vignette_url": car.vignette_url,
+        "controle_technique_url": car.controle_technique_url,
+        "cart_grise_url": car.cart_grise_url,
+        "license_url": car.license_url,
     }
 
 
