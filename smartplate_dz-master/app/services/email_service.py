@@ -28,8 +28,11 @@ def _extract_otp(html_body: str) -> str | None:
     return m.group(1) if m else None
 
 
-async def _send(to: str, subject: str, html_body: str) -> None:
-    otp = _extract_otp(html_body)
+async def _send(to: str, subject: str, html_body: str, otp: str | None = None) -> None:
+    # Accept otp directly — do NOT extract from HTML (CSS hex colors like #132147
+    # contain 6 digits and fool the regex, always returning the wrong value).
+    if otp is None:
+        otp = _extract_otp(html_body)
 
     # Dev convenience: always log OTP to stdout
     if not settings.is_production and otp:
@@ -156,7 +159,7 @@ async def send_signup_otp_email(*, to: str, full_name: str, code: str) -> None:
         code=code,
         headline="Verify your SmartPlate email",
     )
-    await _send(to, "Verify your SmartPlate email", html)
+    await _send(to, "Verify your SmartPlate email", html, otp=code)
 
 
 async def send_login_otp_email(*, to: str, full_name: str, code: str) -> None:
@@ -167,7 +170,7 @@ async def send_login_otp_email(*, to: str, full_name: str, code: str) -> None:
         accent="#10b981",
         code_color="#34d399",
     )
-    await _send(to, "Your SmartPlate login code", html)
+    await _send(to, "Your SmartPlate login code", html, otp=code)
 
 
 # Backwards-compatible alias
