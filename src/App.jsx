@@ -26,6 +26,7 @@ import SendOtpPassword from "./pages/SendOtpPassword.jsx";
 import ProfilVehicule from "./pages/ProfilVehicule.jsx";
 import ImprimerLicence from "./pages/ImprimerLicence.jsx";
 import VehiclePublicView from "./pages/VehiclePublicView.jsx";
+import ModePayment from "./pages/ModePayment.jsx";
 import { RequireAdmin, RequireOperator, RequireUser } from "./admin/AdminLayout.jsx";
 
 export default function App() {
@@ -144,6 +145,8 @@ export default function App() {
         />
         {/* Public vehicle profile — accessible by anyone who scans the QR code */}
         <Route path="/vehicle/:qrCode" element={<VehiclePublicView />} />
+        {/* Payment page */}
+        <Route path="/mode-de-paiement" element={<ModePayment />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Route>
 

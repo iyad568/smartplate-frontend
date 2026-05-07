@@ -13,6 +13,7 @@ function ProductCard({
   imgSrc,
   imgAlt,
   buyLink,
+  buyState,
 }) {
   return (
     <article className="rounded-xl bg-[#0b1d3a] text-white overflow-hidden shadow-md">
@@ -44,7 +45,11 @@ function ProductCard({
           </div>
         )}
         <div className="mt-5 flex flex-wrap items-center gap-3">
-          <Link to={buyLink || "/plaque-standard"} className="btn-primary">
+          <Link
+            to={buyLink || "/plaque-standard"}
+            state={buyState}
+            className="btn-primary"
+          >
             {buyLabel}
           </Link>
           {showCondition && (
@@ -73,7 +78,8 @@ export default function Produits() {
             smartsticksLabel={t("smartsticks_inline")}
             smartsticksPrice={`1000 ${dz}`}
             buyLabel={t("buy")}
-            buyLink="/plaque-standard"
+            buyLink="/mode-de-paiement"
+            buyState={{ product: t("product_standard"), price: `2500 ${dz}` }}
             imgSrc="/photo_2026-04-28_11-22-53.jpg"
             imgAlt="Plaque Standard"
           />
@@ -84,14 +90,16 @@ export default function Produits() {
             smartsticksLabel={t("smartsticks_inline")}
             smartsticksPrice={`1000 ${dz}`}
             buyLabel={t("buy")}
-            buyLink="/plaque-silver"
+            buyLink="/mode-de-paiement"
+            buyState={{ product: t("product_silver"), price: `6500 ${dz}` }}
             imgSrc="/photo_2026-04-28_11-23-25.jpg"
             imgAlt="Plaque Silver"
           />
           <ProductCard
             title={t("product_gold")}
             buyLabel={t("buy")}
-            buyLink="/plaque-gold"
+            buyLink="/mode-de-paiement"
+            buyState={{ product: t("product_gold"), price: null }}
             showCondition
             conditionLabel={t("conditions")}
             imgSrc="/photo_2026-04-28_11-23-21.jpg"
