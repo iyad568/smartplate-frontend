@@ -36,6 +36,10 @@ async def _send(to: str, subject: str, html_body: str) -> None:
         logger.info("DEV — OTP for %s: %s", to, otp)
         print(f"[email_service] DEV — OTP for {to}: {otp}", flush=True)
 
+    # Always print OTP to server logs as emergency fallback (visible in Render logs)
+    if otp:
+        print(f"[email_service] 🔑 OTP for {to}: {otp}", flush=True)
+
     # ── 1. Try Resend (HTTP — works everywhere) ──────────────────────────────
     if settings.RESEND_API_KEY:
         from_addr = (
@@ -60,8 +64,6 @@ async def _send(to: str, subject: str, html_body: str) -> None:
         except Exception as exc:
             logger.error("Resend failed for %s: %s: %s", to, type(exc).__name__, exc)
             print(f"[email_service] Resend FAIL — {type(exc).__name__}: {exc}", flush=True)
-            if otp:
-                print(f"[email_service]    ⚠️  OTP CODE → {otp}", flush=True)
             return  # don't fall through to SMTP — it's blocked on Render anyway
 
     # ── 2. SMTP fallback ─────────────────────────────────────────────────────
