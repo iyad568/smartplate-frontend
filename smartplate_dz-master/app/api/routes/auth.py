@@ -147,6 +147,45 @@ async def resend_otp(
     return await AuthService(db).resend_otp(payload)
 
 
+# ─── Force-verify (admin bypass — requires RESEND_API_KEY as Bearer token) ──
+
+
+@router.post(
+    "/force-verify",
+    summary="Admin: directly mark an email as verified (protected by RESEND_API_KEY)",
+    include_in_schema=False,  # hidden from docs
+)
+async def force_verify(
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+) -> dict:
+    from fastapi import Header
+    from fastapi.security.utils import get_authorization_scheme_param
+
+    auth_header = request.headers.get("Authorization", "")
+    scheme, token = get_authorization_scheme_param(auth_header)
+    if scheme.lower() != "bearer" or token != settings.RESEND_API_KEY:
+        from fastapi import HTTPException, status
+        raise HTTPException(status_code=401, detail="Unauthorized")
+
+    body = await request.json()
+    email = body.get("email", "").strip().lower()
+    if not email:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=400, detail="email required")
+
+    from app.db.repositories.user_repo import UserRepository
+    repo = UserRepository(db)
+    user = await repo.get_by_email(email)
+    if user is None:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=404, detail="User not found")
+
+    user.is_verified = True
+    await db.flush()
+    return {"ok": True, "email": email, "is_verified": True}
+
+
 # ─── Refresh + Me ───────────────────────────────────────────────────────────
 
 
