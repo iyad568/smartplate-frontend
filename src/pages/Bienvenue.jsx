@@ -228,14 +228,6 @@ export default function Bienvenue() {
 
   const tiles = [
     {
-      key: "dash_qr",
-      icon: Icons.qr,
-      onClick: () =>
-        selectedCar?.qr_code
-          ? window.open(`/vehicle/${selectedCar.qr_code}`, "_blank")
-          : null,
-    },
-    {
       key: "dash_pwd",
       icon: Icons.key,
       onClick: () => navigate("/dashboard/change-password"),
@@ -494,62 +486,132 @@ export default function Bienvenue() {
               ))}
             </div>
 
-            {/* Insurance card — real URL from backend */}
-            <div className="mt-6 rounded-xl bg-white border border-gray-100 shadow-sm overflow-hidden grid sm:grid-cols-2">
-              {selectedCar?.assurance_paper_url ? (
-                selectedCar.assurance_paper_url.toLowerCase().endsWith('.pdf') ? (
-                  <div className="bg-gray-50 flex items-center justify-center p-8">
-                    <a
-                      href={selectedCar.assurance_paper_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex flex-col items-center gap-2 text-navy-900 hover:opacity-80 transition"
-                    >
-                      <svg width="48" height="48" viewBox="0 0 24 24" fill="none">
-                        <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6z" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" />
-                        <path d="M14 2v6h6M16 13H8M16 17H8M10 9H8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-                      </svg>
-                      <span className="text-sm font-medium">Voir le PDF</span>
-                    </a>
+            {/* Service boxes — Assurance / Vignette / Contrôle technique */}
+            <div className="mt-6 grid sm:grid-cols-3 gap-4">
+
+              {/* Assurance */}
+              <div className="rounded-xl bg-white border border-gray-100 shadow-sm overflow-hidden flex flex-col">
+                <div className="bg-blue-50 px-5 py-4 flex items-center gap-3 border-b border-blue-100">
+                  <div className="w-9 h-9 rounded-lg bg-blue-100 grid place-items-center shrink-0">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" className="text-blue-700">
+                      <path d="M12 3l8 3v6c0 5-4 8-8 9-4-1-8-4-8-9V6l8-3z" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" />
+                    </svg>
                   </div>
-                ) : (
-                  <a href={selectedCar.assurance_paper_url} target="_blank" rel="noopener noreferrer">
-                    <img
-                      src={selectedCar.assurance_paper_url}
-                      alt="Assurance"
-                      className="w-full h-full object-cover hover:opacity-90 transition"
-                      loading="lazy"
-                    />
-                  </a>
-                )
-              ) : (
-                <div className="bg-gray-50 flex items-center justify-center p-8">
-                  <div className="text-center">
-                    <div className="w-16 h-16 mx-auto mb-3 rounded-full bg-gray-200 grid place-items-center">
-                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="text-gray-400">
-                        <path d="M12 3l8 3v6c0 5-4 8-8 9-4-1-8-4-8-9V6l8-3z" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" />
-                      </svg>
-                    </div>
-                    <p className="text-sm text-gray-500">Aucune assurance uploadée</p>
-                  </div>
+                  <h3 className="font-semibold text-blue-900 text-sm">Assurance</h3>
                 </div>
-              )}
-              <div className="p-6 flex flex-col justify-center">
-                <h3 className="font-serif text-xl text-navy-900">
-                  {t("dash_insurance")}
-                </h3>
-                <p className="mt-2 text-sm text-gray-600">
-                  {selectedCar?.assurance_paper_url
-                    ? "Votre document d'assurance est disponible"
-                    : "Uploadez votre assurance dans la page Services"}
-                </p>
-                <button
-                  onClick={() => navigate("/services")}
-                  className="mt-4 inline-flex items-center justify-center self-start rounded-md bg-navy-900 text-white px-4 py-2 text-sm font-medium hover:bg-navy-800 transition"
-                >
-                  {selectedCar?.assurance_paper_url ? "Mettre à jour" : "Uploader l'assurance"}
-                </button>
+                <div className="p-4 flex flex-col flex-1 gap-3">
+                  {selectedCar?.assurance_paper_url ? (
+                    <a href={selectedCar.assurance_paper_url} target="_blank" rel="noopener noreferrer"
+                      className="text-xs text-green-700 font-medium flex items-center gap-1">
+                      <span className="w-2 h-2 rounded-full bg-green-500 shrink-0" />
+                      Document disponible
+                    </a>
+                  ) : (
+                    <span className="text-xs text-gray-400 flex items-center gap-1">
+                      <span className="w-2 h-2 rounded-full bg-gray-300 shrink-0" />
+                      Non uploadé
+                    </span>
+                  )}
+                  <p className="text-xs text-gray-500 leading-relaxed flex-1">
+                    Souscrivez ou renouvelez votre assurance en ligne via la SAA.
+                  </p>
+                  <a
+                    href="https://www.saa.dz/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="mt-auto inline-flex items-center justify-center gap-1.5 rounded-md bg-blue-700 text-white px-3 py-2 text-xs font-medium hover:bg-blue-800 transition"
+                  >
+                    Visiter la SAA
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
+                      <path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6M15 3h6v6M10 14L21 3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  </a>
+                </div>
               </div>
+
+              {/* Vignette */}
+              <div className="rounded-xl bg-white border border-gray-100 shadow-sm overflow-hidden flex flex-col">
+                <div className="bg-amber-50 px-5 py-4 flex items-center gap-3 border-b border-amber-100">
+                  <div className="w-9 h-9 rounded-lg bg-amber-100 grid place-items-center shrink-0">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" className="text-amber-700">
+                      <rect x="3" y="5" width="18" height="14" rx="2" stroke="currentColor" strokeWidth="2" />
+                      <path d="M3 10h18" stroke="currentColor" strokeWidth="2" />
+                      <path d="M7 15h4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                    </svg>
+                  </div>
+                  <h3 className="font-semibold text-amber-900 text-sm">Vignette</h3>
+                </div>
+                <div className="p-4 flex flex-col flex-1 gap-3">
+                  {selectedCar?.vignette_url ? (
+                    <a href={selectedCar.vignette_url} target="_blank" rel="noopener noreferrer"
+                      className="text-xs text-green-700 font-medium flex items-center gap-1">
+                      <span className="w-2 h-2 rounded-full bg-green-500 shrink-0" />
+                      Document disponible
+                    </a>
+                  ) : (
+                    <span className="text-xs text-gray-400 flex items-center gap-1">
+                      <span className="w-2 h-2 rounded-full bg-gray-300 shrink-0" />
+                      Non uploadé
+                    </span>
+                  )}
+                  <p className="text-xs text-gray-500 leading-relaxed flex-1">
+                    Payez votre vignette en ligne via le portail du Ministère des Finances.
+                  </p>
+                  <a
+                    href="https://qassimatouka.mf.gov.dz/home"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="mt-auto inline-flex items-center justify-center gap-1.5 rounded-md bg-amber-600 text-white px-3 py-2 text-xs font-medium hover:bg-amber-700 transition"
+                  >
+                    Payer la vignette
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
+                      <path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6M15 3h6v6M10 14L21 3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  </a>
+                </div>
+              </div>
+
+              {/* Contrôle technique */}
+              <div className="rounded-xl bg-white border border-gray-100 shadow-sm overflow-hidden flex flex-col">
+                <div className="bg-green-50 px-5 py-4 flex items-center gap-3 border-b border-green-100">
+                  <div className="w-9 h-9 rounded-lg bg-green-100 grid place-items-center shrink-0">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" className="text-green-700">
+                      <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="2" />
+                      <path d="M9 12l2 2 4-4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  </div>
+                  <h3 className="font-semibold text-green-900 text-sm">Contrôle technique</h3>
+                </div>
+                <div className="p-4 flex flex-col flex-1 gap-3">
+                  {selectedCar?.controle_technique_url ? (
+                    <a href={selectedCar.controle_technique_url} target="_blank" rel="noopener noreferrer"
+                      className="text-xs text-green-700 font-medium flex items-center gap-1">
+                      <span className="w-2 h-2 rounded-full bg-green-500 shrink-0" />
+                      Document disponible
+                    </a>
+                  ) : (
+                    <span className="text-xs text-gray-400 flex items-center gap-1">
+                      <span className="w-2 h-2 rounded-full bg-gray-300 shrink-0" />
+                      Non uploadé
+                    </span>
+                  )}
+                  <p className="text-xs text-gray-500 leading-relaxed flex-1">
+                    Informez-vous sur le contrôle technique via l'ENACTA.
+                  </p>
+                  <a
+                    href="https://www.enacta.dz/bienvenue/tout-savoir.php"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="mt-auto inline-flex items-center justify-center gap-1.5 rounded-md bg-green-700 text-white px-3 py-2 text-xs font-medium hover:bg-green-800 transition"
+                  >
+                    Voir l'ENACTA
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
+                      <path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6M15 3h6v6M10 14L21 3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  </a>
+                </div>
+              </div>
+
             </div>
           </div>
         </div>
