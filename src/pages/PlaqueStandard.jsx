@@ -84,11 +84,31 @@ export default function PlaqueStandard() {
     }
   };
 
+  const getCurrentPlateType = () => {
+    const pathname = window.location.pathname;
+    if (pathname.includes("plaque-silver")) return "silver";
+    if (pathname.includes("plaque-gold")) return "gold";
+    return "standard";
+  };
+
+  const handlePay = (e) => {
+    e.preventDefault();
+    const type = getCurrentPlateType();
+    const priceMap = { standard: "2500 DZ", silver: "6500 DZ", gold: null };
+    const nameMap = { standard: "Plaque Standard", silver: "Plaque Silver", gold: "Plaque Gold" };
+    navigate("/mode-de-paiement", {
+      state: {
+        product: nameMap[type],
+        price: priceMap[type],
+      },
+    });
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     // Validate form
-    if (!form.name || !form.first || !form.phone || !form.email || !form.cni || 
+    if (!form.name || !form.first || !form.phone || !form.email || !form.cni ||
         !form.address || !form.chassis || !form.type || !form.brand || !form.plate) {
       setError("Veuillez remplir tous les champs obligatoires");
       return;
@@ -98,15 +118,6 @@ export default function PlaqueStandard() {
     setError("");
 
     try {
-      // Create order with plate type based on current page
-      const getCurrentPlateType = () => {
-        const pathname = window.location.pathname;
-        if (pathname.includes('plaque-standard')) return 'standard';
-        if (pathname.includes('plaque-silver')) return 'silver';
-        if (pathname.includes('plaque-gold')) return 'gold';
-        return 'standard'; // default
-      };
-
       const orderData = {
         name: form.name,
         first: form.first,
@@ -366,12 +377,11 @@ export default function PlaqueStandard() {
                 {loading ? "Création..." : t("ps_register")}
               </button>
               <button
-                type="submit"
-                onClick={handleSubmit}
-                disabled={loading}
-                className="rounded-md bg-navy-900 text-white px-5 py-2 text-sm font-medium hover:bg-navy-800 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                type="button"
+                onClick={handlePay}
+                className="rounded-md bg-navy-900 text-white px-5 py-2 text-sm font-medium hover:bg-navy-800 transition"
               >
-                {loading ? "Traitement..." : t("ps_pay")}
+                {t("ps_pay")}
               </button>
             </div>
           </div>

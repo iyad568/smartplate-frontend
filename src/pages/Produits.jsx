@@ -78,8 +78,7 @@ export default function Produits() {
             smartsticksLabel={t("smartsticks_inline")}
             smartsticksPrice={`1000 ${dz}`}
             buyLabel={t("buy")}
-            buyLink="/mode-de-paiement"
-            buyState={{ product: t("product_standard"), price: `2500 ${dz}` }}
+            buyLink="/plaque-standard"
             imgSrc="/photo_2026-04-28_11-22-53.jpg"
             imgAlt="Plaque Standard"
           />
@@ -90,16 +89,14 @@ export default function Produits() {
             smartsticksLabel={t("smartsticks_inline")}
             smartsticksPrice={`1000 ${dz}`}
             buyLabel={t("buy")}
-            buyLink="/mode-de-paiement"
-            buyState={{ product: t("product_silver"), price: `6500 ${dz}` }}
+            buyLink="/plaque-silver"
             imgSrc="/photo_2026-04-28_11-23-25.jpg"
             imgAlt="Plaque Silver"
           />
           <ProductCard
             title={t("product_gold")}
             buyLabel={t("buy")}
-            buyLink="/mode-de-paiement"
-            buyState={{ product: t("product_gold"), price: null }}
+            buyLink="/plaque-gold"
             showCondition
             conditionLabel={t("conditions")}
             imgSrc="/photo_2026-04-28_11-23-21.jpg"
