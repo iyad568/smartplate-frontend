@@ -43,14 +43,22 @@ async def _send(to: str, subject: str, html_body: str) -> None:
             print(f"[email_service] 🔔 DEV — OTP for {to}: {otp}", flush=True)
 
     if not smtp_configured:
+        # When SMTP is not yet configured, extract the OTP from the HTML body
+        # and print it directly to stdout so it is visible in Render / server logs.
+        # This allows testing the auth flow without a real email server.
+        import re
+        code_match = re.search(r"\b(\d{6})\b", html_body)
+        otp_hint = f" | ⚠️  OTP CODE → {code_match.group(1)}" if code_match else ""
         logger.warning(
-            "SMTP not configured — skipping send to %s. Set SMTP_USERNAME, "
-            "SMTP_PASSWORD and EMAILS_FROM_EMAIL in .env to enable real email.",
-            to,
+            "SMTP not configured — email NOT sent to %s%s",
+            to, otp_hint,
         )
         print(
-            f"[email_service] SMTP NOT CONFIGURED — skipping send to {to}. "
-            f"Fill SMTP_USERNAME, SMTP_PASSWORD, EMAILS_FROM_EMAIL in .env.",
+            f"[email_service] ⚠️  SMTP NOT CONFIGURED\n"
+            f"[email_service]    TO      : {to}\n"
+            f"[email_service]    SUBJECT : {subject}\n"
+            f"[email_service]    {otp_hint.strip()}\n"
+            f"[email_service] → Set SMTP_USERNAME, SMTP_PASSWORD, EMAILS_FROM_EMAIL in Render dashboard.",
             flush=True,
         )
         return
