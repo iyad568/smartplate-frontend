@@ -12,6 +12,8 @@ Token types issued by this service:
 """
 from __future__ import annotations
 
+import hashlib
+import hmac
 import secrets
 from datetime import datetime, timedelta, timezone
 from typing import Literal
@@ -23,9 +25,7 @@ from app.core.config import get_settings
 
 settings = get_settings()
 
-# A single context handles both passwords and OTPs. ``bcrypt`` truncates
-# inputs over 72 bytes, but a 6-digit OTP is far below that limit, so reuse
-# is safe and avoids a second dependency.
+# Password hashing uses bcrypt via passlib.
 _pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 
@@ -44,16 +44,23 @@ def verify_password(plain: str, hashed: str) -> bool:
         return False
 
 
-# ─── OTPs (hashed at rest) ───────────────────────────────────────────────────
+# ─── OTPs (SHA-256 at rest) ──────────────────────────────────────────────────
+# SHA-256 is used instead of bcrypt for OTPs because:
+#  * passlib 1.7.4 + bcrypt 4.x has silent verification failures
+#  * OTPs are short-lived (10 min) and single-use — bcrypt's cost is unnecessary
+#  * SHA-256 has no library compatibility issues
 
 
 def hash_otp(plain_code: str) -> str:
-    return _pwd_context.hash(plain_code)
+    """Return a hex-encoded SHA-256 digest of the plain OTP code."""
+    return hashlib.sha256(plain_code.encode()).hexdigest()
 
 
 def verify_otp(plain_code: str, hashed: str) -> bool:
+    """Constant-time comparison of a plain OTP against its stored hash."""
     try:
-        return _pwd_context.verify(plain_code, hashed)
+        expected = hashlib.sha256(plain_code.encode()).hexdigest()
+        return hmac.compare_digest(expected, hashed)
     except Exception:
         return False
 
