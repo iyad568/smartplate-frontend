@@ -3,7 +3,7 @@ import { useLang } from "../i18n.jsx";
 import { useState, useEffect } from "react";
 import { apiService } from "../services/api.js";
 
-function ServiceCard({ to, imgSrc, imgAlt, label, contain = false, showUpload = false, serviceType, selectedCar }) {
+function ServiceCard({ to, externalLink, imgSrc, imgAlt, label, contain = false, showUpload = false, serviceType, selectedCar }) {
   const [file, setFile] = useState(null);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState("");
@@ -116,6 +116,27 @@ function ServiceCard({ to, imgSrc, imgAlt, label, contain = false, showUpload = 
             />
           </div>
         </Link>
+      ) : externalLink ? (
+        <a href={externalLink} target="_blank" rel="noopener noreferrer" className="block relative">
+          <div className="aspect-[16/9] bg-gray-50 overflow-hidden grid place-items-center">
+            <img
+              src={imgSrc}
+              alt={imgAlt}
+              className={
+                contain
+                  ? "max-h-full max-w-full object-contain p-4 hover:scale-105 transition duration-300"
+                  : "w-full h-full object-cover hover:scale-105 transition duration-300"
+              }
+              loading="lazy"
+            />
+          </div>
+          <div className="absolute top-2 right-2 bg-white/90 rounded-full px-2 py-1 flex items-center gap-1 text-xs text-navy-900 font-medium shadow-sm">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none">
+              <path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6M15 3h6v6M10 14L21 3" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+            Site officiel
+          </div>
+        </a>
       ) : (
         <div className="aspect-[16/9] bg-gray-50 overflow-hidden grid place-items-center">
           <img
@@ -289,6 +310,7 @@ export default function Services() {
       contain: false,
       showUpload: true,
       serviceType: "assurance",
+      externalLink: "https://www.saa.dz/",
     },
     {
       key: "service_ct",
@@ -297,6 +319,7 @@ export default function Services() {
       contain: false,
       showUpload: true,
       serviceType: "controle_technique",
+      externalLink: "https://www.enacta.dz/bienvenue/tout-savoir.php",
     },
     {
       key: "service_vig",
@@ -305,6 +328,7 @@ export default function Services() {
       contain: true,
       showUpload: true,
       serviceType: "vignette",
+      externalLink: "https://qassimatouka.mf.gov.dz/home",
     },
     {
       key: "service_sos",
@@ -409,6 +433,7 @@ export default function Services() {
               <ServiceCard
                 key={it.key}
                 to={it.to}
+                externalLink={it.externalLink}
                 imgSrc={it.img}
                 imgAlt={it.alt}
                 label={t(it.key)}
