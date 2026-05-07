@@ -158,10 +158,11 @@ class ApiService {
     });
   }
 
-  async resendOtp(email, purpose = 'SIGNUP') {
+  async resendOtp(email, purpose = 'signup') {
+    // Backend expects lowercase: "signup" | "login"
     return this.apiCall('/auth/resend-otp', {
       method: 'POST',
-      body: JSON.stringify({ email, purpose }),
+      body: JSON.stringify({ email, purpose: purpose.toLowerCase() }),
     });
   }
 

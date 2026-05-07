@@ -73,7 +73,7 @@ export default function VerifyEmail() {
     setError("");
 
     try {
-      await apiService.resendOtp(email, reason === "signup" ? "SIGNUP" : "LOGIN");
+      await apiService.resendOtp(email, reason === "signup" ? "signup" : "login");
       setResentAt(new Date().toLocaleTimeString());
       setError("Code renvoyé avec succès");
     } catch (error) {
