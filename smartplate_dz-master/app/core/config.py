@@ -44,7 +44,10 @@ class Settings(BaseSettings):
     OTP_MAX_ATTEMPTS: int = 5
     MAX_LOGIN_ATTEMPTS_PER_MINUTE: int = 5
 
-    # ─── SMTP ─────────────────────────────────────────────────────────────────
+    # ─── Resend (preferred — works on Render free tier) ───────────────────────
+    RESEND_API_KEY: str = ""
+
+    # ─── SMTP (fallback — blocked on Render free tier) ────────────────────────
     SMTP_HOST: str = "smtp.gmail.com"
     SMTP_PORT: int = 587
     SMTP_USERNAME: str = ""

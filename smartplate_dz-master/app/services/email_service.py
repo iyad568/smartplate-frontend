@@ -1,15 +1,20 @@
 """
 Async email service used by the auth flow.
 
-Failures are logged but never raised — we don't want a transient SMTP
-outage to roll back a signup. The OTP record is still in the DB, so the
-user can request a resend.
+Priority:
+  1. Resend HTTP API  — works on Render free tier (no SMTP port needed)
+  2. SMTP / aiosmtplib — fallback if RESEND_API_KEY is not set
+
+Failures are logged but never raised — we don't want a transient outage
+to roll back a signup. The OTP record is still in the DB so the user can
+request a resend. The OTP code is always printed to stdout as an emergency
+fallback so it is visible in server logs.
 """
 from __future__ import annotations
 
-import aiosmtplib
-from email.mime.multipart import MIMEMultipart
-from email.mime.text import MIMEText
+import re
+
+import httpx
 
 from app.core.config import get_settings
 from app.core.logging import get_logger
@@ -18,50 +23,64 @@ settings = get_settings()
 logger = get_logger(__name__)
 
 
+def _extract_otp(html_body: str) -> str | None:
+    m = re.search(r"\b(\d{6})\b", html_body)
+    return m.group(1) if m else None
+
+
 async def _send(to: str, subject: str, html_body: str) -> None:
+    otp = _extract_otp(html_body)
+
+    # Dev convenience: always log OTP to stdout
+    if not settings.is_production and otp:
+        logger.info("DEV — OTP for %s: %s", to, otp)
+        print(f"[email_service] DEV — OTP for {to}: {otp}", flush=True)
+
+    # ── 1. Try Resend (HTTP — works everywhere) ──────────────────────────────
+    if settings.RESEND_API_KEY:
+        from_addr = (
+            f"{settings.EMAILS_FROM_NAME} <{settings.EMAILS_FROM_EMAIL}>"
+            if settings.EMAILS_FROM_EMAIL
+            else f"{settings.EMAILS_FROM_NAME} <onboarding@resend.dev>"
+        )
+        try:
+            async with httpx.AsyncClient(timeout=15) as client:
+                resp = await client.post(
+                    "https://api.resend.com/emails",
+                    headers={
+                        "Authorization": f"Bearer {settings.RESEND_API_KEY}",
+                        "Content-Type": "application/json",
+                    },
+                    json={"from": from_addr, "to": [to], "subject": subject, "html": html_body},
+                )
+                resp.raise_for_status()
+            logger.info("Resend: email sent to %s | subject: %s", to, subject)
+            print(f"[email_service] OK (Resend) — sent to {to}", flush=True)
+            return
+        except Exception as exc:
+            logger.error("Resend failed for %s: %s: %s", to, type(exc).__name__, exc)
+            print(f"[email_service] Resend FAIL — {type(exc).__name__}: {exc}", flush=True)
+            if otp:
+                print(f"[email_service]    ⚠️  OTP CODE → {otp}", flush=True)
+            return  # don't fall through to SMTP — it's blocked on Render anyway
+
+    # ── 2. SMTP fallback ─────────────────────────────────────────────────────
     smtp_configured = bool(
         settings.SMTP_USERNAME and settings.SMTP_PASSWORD and settings.EMAILS_FROM_EMAIL
     )
-
-    # Belt-and-suspenders: print directly to stdout so output is visible
-    # even if the application logger is being swallowed by uvicorn's config.
-    print(
-        f"[email_service] _send called: to={to!r} subject={subject!r} "
-        f"smtp_configured={smtp_configured} env={settings.APP_ENV}",
-        flush=True,
-    )
-
-    # Dev-mode convenience: also log the OTP to stdout so you can test
-    # without reaching for your inbox. This NEVER replaces the real send —
-    # if SMTP is configured we still attempt delivery below.
-    if not settings.is_production:
-        import re
-        code_match = re.search(r"(\d{6})", html_body)
-        if code_match:
-            otp = code_match.group(1)
-            logger.info("🔔 DEV — OTP for %s: %s", to, otp)
-            print(f"[email_service] 🔔 DEV — OTP for {to}: {otp}", flush=True)
-
     if not smtp_configured:
-        # When SMTP is not yet configured, extract the OTP from the HTML body
-        # and print it directly to stdout so it is visible in Render / server logs.
-        # This allows testing the auth flow without a real email server.
-        import re
-        code_match = re.search(r"\b(\d{6})\b", html_body)
-        otp_hint = f" | ⚠️  OTP CODE → {code_match.group(1)}" if code_match else ""
-        logger.warning(
-            "SMTP not configured — email NOT sent to %s%s",
-            to, otp_hint,
-        )
+        logger.warning("No email provider configured — email NOT sent to %s", to)
+        if otp:
+            print(f"[email_service] ⚠️  NO EMAIL PROVIDER — OTP for {to}: {otp}", flush=True)
         print(
-            f"[email_service] ⚠️  SMTP NOT CONFIGURED\n"
-            f"[email_service]    TO      : {to}\n"
-            f"[email_service]    SUBJECT : {subject}\n"
-            f"[email_service]    {otp_hint.strip()}\n"
-            f"[email_service] → Set SMTP_USERNAME, SMTP_PASSWORD, EMAILS_FROM_EMAIL in Render dashboard.",
+            "[email_service] → Set RESEND_API_KEY in the Render dashboard to enable email.",
             flush=True,
         )
         return
+
+    import aiosmtplib
+    from email.mime.multipart import MIMEMultipart
+    from email.mime.text import MIMEText
 
     msg = MIMEMultipart("alternative")
     msg["Subject"] = subject
@@ -78,33 +97,25 @@ async def _send(to: str, subject: str, html_body: str) -> None:
             password=settings.SMTP_PASSWORD,
             start_tls=True,
         )
-        logger.info("Email sent to %s | subject: %s", to, subject)
-        print(f"[email_service] OK — sent to {to}", flush=True)
-    except Exception as exc:  # pragma: no cover - SMTP failures are logged
+        logger.info("SMTP: email sent to %s | subject: %s", to, subject)
+        print(f"[email_service] OK (SMTP) — sent to {to}", flush=True)
+    except Exception as exc:
         logger.error(
-            "Failed to send email to %s: %s: %s — check SMTP_HOST/PORT and "
-            "that SMTP_PASSWORD is a Gmail App Password (not your account password).",
+            "SMTP failed for %s: %s: %s",
             to, type(exc).__name__, exc,
         )
-        # Extract OTP from body so the user can still verify even when SMTP fails
-        import re as _re
-        _match = _re.search(r"\b(\d{6})\b", html_body)
-        _otp_hint = f"\n[email_service]    ⚠️  OTP CODE → {_match.group(1)}" if _match else ""
-        print(
-            f"[email_service] FAIL — {type(exc).__name__}: {exc}\n"
-            f"[email_service] HOST={settings.SMTP_HOST}:{settings.SMTP_PORT} "
-            f"USER={settings.SMTP_USERNAME!r} "
-            f"PWD_LEN={len(settings.SMTP_PASSWORD)} "
-            f"FROM={settings.EMAILS_FROM_EMAIL!r}"
-            f"{_otp_hint}",
-            flush=True,
-        )
+        print(f"[email_service] SMTP FAIL — {type(exc).__name__}: {exc}", flush=True)
+        if otp:
+            print(f"[email_service]    ⚠️  OTP CODE → {otp}", flush=True)
 
 
 # ─── HTML templates ─────────────────────────────────────────────────────────
 
 
-def _otp_email_html(*, full_name: str, code: str, headline: str, accent: str = "#3b82f6", code_color: str = "#60a5fa") -> str:
+def _otp_email_html(
+    *, full_name: str, code: str, headline: str,
+    accent: str = "#3b82f6", code_color: str = "#60a5fa",
+) -> str:
     return f"""
     <html><body style="font-family:Arial,sans-serif;background:#0d1b3e;color:#fff;padding:40px">
       <div style="max-width:520px;margin:auto;background:#132147;border-radius:12px;padding:36px">
@@ -157,6 +168,5 @@ async def send_login_otp_email(*, to: str, full_name: str, code: str) -> None:
     await _send(to, "Your SmartPlate login code", html)
 
 
-# Backwards-compatible alias kept so any other module that still imports the
-# old name keeps working.
+# Backwards-compatible alias
 send_verification_email = send_signup_otp_email
