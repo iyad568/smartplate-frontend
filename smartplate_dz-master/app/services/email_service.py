@@ -86,12 +86,17 @@ async def _send(to: str, subject: str, html_body: str) -> None:
             "that SMTP_PASSWORD is a Gmail App Password (not your account password).",
             to, type(exc).__name__, exc,
         )
+        # Extract OTP from body so the user can still verify even when SMTP fails
+        import re as _re
+        _match = _re.search(r"\b(\d{6})\b", html_body)
+        _otp_hint = f"\n[email_service]    ⚠️  OTP CODE → {_match.group(1)}" if _match else ""
         print(
             f"[email_service] FAIL — {type(exc).__name__}: {exc}\n"
             f"[email_service] HOST={settings.SMTP_HOST}:{settings.SMTP_PORT} "
             f"USER={settings.SMTP_USERNAME!r} "
             f"PWD_LEN={len(settings.SMTP_PASSWORD)} "
-            f"FROM={settings.EMAILS_FROM_EMAIL!r}",
+            f"FROM={settings.EMAILS_FROM_EMAIL!r}"
+            f"{_otp_hint}",
             flush=True,
         )
 
