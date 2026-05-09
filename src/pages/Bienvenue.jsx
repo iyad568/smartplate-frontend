@@ -393,35 +393,26 @@ export default function Bienvenue() {
                       <p className="mt-2 text-xs text-red-600">{platePhotoError}</p>
                     )}
 
-                    <button
-                      onClick={() => setShowPlateModal(true)}
-                      className="mt-3 w-full text-sm text-navy-600 hover:text-navy-700 font-medium"
-                    >
-                      + Ajouter un autre véhicule
-                    </button>
                   </div>
                 ) : (
-                  <div className="text-center py-8">
-                    <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gray-100 grid place-items-center">
+                  <div className="text-center py-8 space-y-4">
+                    <div className="w-16 h-16 mx-auto rounded-full bg-gray-100 grid place-items-center">
                       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="text-gray-400">
                         <rect x="3" y="7" width="18" height="10" rx="1" stroke="currentColor" strokeWidth="2" />
                         <path d="M7 11h10M7 14h6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
                       </svg>
                     </div>
-                    <h3 className="text-gray-900 font-medium mb-2">
-                      Aucun véhicule enregistré
-                    </h3>
-                    <p className="text-gray-500 text-sm mb-4">
-                      Ajoutez votre véhicule pour commencer
+                    <p className="text-gray-700 text-sm font-medium leading-relaxed">
+                      Pour déclarer le véhicule,<br />il faut acheter un matricule
                     </p>
                     <button
-                      onClick={() => setShowPlateModal(true)}
-                      className="inline-flex items-center gap-2 rounded-md bg-navy-900 text-white px-4 py-2 text-sm hover:bg-navy-800 transition"
+                      onClick={() => navigate("/produits")}
+                      className="inline-flex items-center gap-2 rounded-md bg-navy-900 text-white px-4 py-2 text-sm font-medium hover:bg-navy-800 transition"
                     >
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-                        <path d="M12 5v14M5 12h14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                        <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4zM3 6h18M16 10a4 4 0 01-8 0" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                       </svg>
-                      Ajouter un véhicule
+                      Acheter un matricule
                     </button>
                   </div>
                 )}
