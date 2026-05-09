@@ -395,25 +395,14 @@ export default function Bienvenue() {
 
                   </div>
                 ) : (
-                  <div className="text-center py-8 space-y-4">
+                  <div className="text-center py-8">
                     <div className="w-16 h-16 mx-auto rounded-full bg-gray-100 grid place-items-center">
                       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="text-gray-400">
                         <rect x="3" y="7" width="18" height="10" rx="1" stroke="currentColor" strokeWidth="2" />
                         <path d="M7 11h10M7 14h6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
                       </svg>
                     </div>
-                    <p className="text-gray-700 text-sm font-medium leading-relaxed">
-                      Pour déclarer le véhicule,<br />il faut acheter un matricule
-                    </p>
-                    <button
-                      onClick={() => navigate("/produits")}
-                      className="inline-flex items-center gap-2 rounded-md bg-navy-900 text-white px-4 py-2 text-sm font-medium hover:bg-navy-800 transition"
-                    >
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-                        <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4zM3 6h18M16 10a4 4 0 01-8 0" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                      </svg>
-                      Acheter un matricule
-                    </button>
+                    <p className="text-gray-500 text-sm mt-3">Aucun véhicule enregistré</p>
                   </div>
                 )}
               </div>
@@ -468,13 +457,40 @@ export default function Bienvenue() {
             </h2>
             <div className="grid sm:grid-cols-2 gap-4">
               {tiles.map((tl) => (
-                <Tile 
-                  key={tl.key} 
-                  icon={tl.icon} 
-                  label={t(tl.key)} 
+                <Tile
+                  key={tl.key}
+                  icon={tl.icon}
+                  label={t(tl.key)}
                   onClick={tl.onClick}
                 />
               ))}
+            </div>
+
+            {/* Buy plate prompt */}
+            <div className="mt-6 rounded-xl bg-white border border-gray-100 shadow-sm p-6 flex flex-col sm:flex-row items-center gap-5">
+              <div className="w-14 h-14 rounded-full bg-navy-900/10 grid place-items-center shrink-0">
+                <svg width="26" height="26" viewBox="0 0 24 24" fill="none" className="text-navy-900">
+                  <rect x="3" y="7" width="18" height="10" rx="1" stroke="currentColor" strokeWidth="2" />
+                  <path d="M7 11h10M7 14h6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                </svg>
+              </div>
+              <div className="flex-1 text-center sm:text-left">
+                <p className="font-semibold text-gray-800 text-sm">
+                  Pour déclarer le véhicule, il faut acheter un matricule
+                </p>
+                <p className="text-gray-500 text-xs mt-1">
+                  Choisissez votre plaque Standard, Silver ou Gold
+                </p>
+              </div>
+              <button
+                onClick={() => navigate("/produits")}
+                className="shrink-0 inline-flex items-center gap-2 rounded-md bg-navy-900 text-white px-5 py-2.5 text-sm font-medium hover:bg-navy-800 transition"
+              >
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none">
+                  <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4zM3 6h18M16 10a4 4 0 01-8 0" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+                Acheter un matricule
+              </button>
             </div>
 
           </div>
