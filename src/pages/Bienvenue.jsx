@@ -466,32 +466,18 @@ export default function Bienvenue() {
               ))}
             </div>
 
-            {/* Buy plate prompt */}
-            <div className="mt-6 rounded-xl bg-white border border-gray-100 shadow-sm p-6 flex flex-col sm:flex-row items-center gap-5">
-              <div className="w-14 h-14 rounded-full bg-navy-900/10 grid place-items-center shrink-0">
-                <svg width="26" height="26" viewBox="0 0 24 24" fill="none" className="text-navy-900">
-                  <rect x="3" y="7" width="18" height="10" rx="1" stroke="currentColor" strokeWidth="2" />
-                  <path d="M7 11h10M7 14h6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-                </svg>
-              </div>
-              <div className="flex-1 text-center sm:text-left">
-                <p className="font-semibold text-gray-800 text-sm">
-                  Pour déclarer le véhicule, il faut acheter un matricule
-                </p>
-                <p className="text-gray-500 text-xs mt-1">
-                  Choisissez votre plaque Standard, Silver ou Gold
-                </p>
-              </div>
-              <button
-                onClick={() => navigate("/produits")}
-                className="shrink-0 inline-flex items-center gap-2 rounded-md bg-navy-900 text-white px-5 py-2.5 text-sm font-medium hover:bg-navy-800 transition"
-              >
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none">
-                  <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4zM3 6h18M16 10a4 4 0 01-8 0" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-                Acheter un matricule
-              </button>
-            </div>
+            {/* Buy / add plate button */}
+            <button
+              onClick={() => navigate("/produits")}
+              className="mt-6 w-full rounded-xl bg-navy-900 text-white px-6 py-4 text-left hover:bg-navy-800 transition flex flex-col gap-0.5"
+            >
+              <span className="text-xs text-blue-200 font-medium">
+                {cars.length === 0 ? "Vous n'avez pas de plaque !" : "Vous avez déjà une plaque"}
+              </span>
+              <span className="text-lg font-bold">
+                {cars.length === 0 ? "Activer SmartPlate" : "Ajouter une autre plaque"}
+              </span>
+            </button>
 
           </div>
         </div>
