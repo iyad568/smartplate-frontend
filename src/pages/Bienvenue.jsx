@@ -467,7 +467,7 @@ export default function Bienvenue() {
             </div>
 
             {/* Buy / add plate button */}
-            <div className="mt-10 flex justify-start">
+            <div className="mt-16 flex justify-center">
               <button
                 onClick={() => navigate("/produits")}
                 className="rounded-xl bg-navy-900 text-white px-8 py-4 text-left hover:bg-navy-800 transition flex flex-col gap-0.5 min-w-[220px] max-w-[280px]"
