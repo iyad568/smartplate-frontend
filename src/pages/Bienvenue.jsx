@@ -467,17 +467,19 @@ export default function Bienvenue() {
             </div>
 
             {/* Buy / add plate button */}
-            <button
-              onClick={() => navigate("/produits")}
-              className="mt-6 w-full rounded-xl bg-navy-900 text-white px-6 py-4 text-left hover:bg-navy-800 transition flex flex-col gap-0.5"
-            >
-              <span className="text-xs text-blue-200 font-medium">
-                {cars.length === 0 ? "Vous n'avez pas de plaque !" : "Vous avez déjà une plaque"}
-              </span>
-              <span className="text-lg font-bold">
-                {cars.length === 0 ? "Activer SmartPlate" : "Ajouter une autre plaque"}
-              </span>
-            </button>
+            <div className="mt-10 flex justify-start">
+              <button
+                onClick={() => navigate("/produits")}
+                className="rounded-xl bg-navy-900 text-white px-8 py-4 text-left hover:bg-navy-800 transition flex flex-col gap-0.5 min-w-[220px] max-w-[280px]"
+              >
+                <span className="text-xs text-blue-200 font-medium">
+                  {cars.length === 0 ? "Vous n'avez pas de plaque !" : "Vous avez déjà une plaque"}
+                </span>
+                <span className="text-lg font-bold">
+                  {cars.length === 0 ? "Activer SmartPlate" : "Ajouter une autre plaque"}
+                </span>
+              </button>
+            </div>
 
           </div>
         </div>
